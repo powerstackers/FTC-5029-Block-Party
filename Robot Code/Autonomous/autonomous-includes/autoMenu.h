@@ -6,10 +6,10 @@
 ////////////////////////////////////////////////////////////
 #include "JoystickDriver.c"
 
-// Create constants to make it easier to use the buttons
-TButtons NEXT_BUTTON = kRightButton;
-TButtons PREV_BUTTON = kLeftButton;
-TButtons DOWN_BUTTON = kEnterButton;
+// Constants to make it easier to use the buttons
+#define NEXT_BUTTON kRightButton
+#define PREV_BUTTON kLeftButton
+#define DOWN_BUTTON kEnterButton
 
 ///////////////////////////////////////////////////////////
 //
@@ -84,28 +84,16 @@ int backwardMotorRatio = 90;
 /////////////////////////////////////////////////////////////
 task runMenuOffensive()
 {
-	// Turn off the diagnostic display, and clear the screen
 	bDisplayDiagnostics = false;
 	eraseDisplay();
 
-	// Declare variables to store the currently selected variable,
-	// And the data type of the currently selected variable
-	void* currVar;
-	char currType;
+	void* currVar = &startNear;
+	char currType = 'b';
 
-	// Initialize the current variable to startNear,
-	// And initialize the data type to "boolean"
-	currVar = &startNear;
-	currType = 'b';
-
-	// Run this code until the task is ended
 	while (true){
-
-		// If the delay is below zero, set it to zero
+		// Can't wait for negative seconds, can we?
 		if(delay < 0)
 			delay = 0;
-
-		// If the delay is above the maximum delay, set it to the maximum delay
 		else if(delay > maxDelay)
 			delay = maxDelay;
 
@@ -119,86 +107,104 @@ task runMenuOffensive()
 		nxtDisplayString(6, "BkwrdRatio:%d ", backwardMotorRatio);
 
 		// Print a selection icon next to the active variable name
-		if(currVar == &startNear){
-			nxtDisplayStringAt(94, 63, "]");
-			nxtDisplayStringAt(94, 17, " ");
-		}else if(currVar == &doIr){
-			nxtDisplayStringAt(94, 63, " ");
-			nxtDisplayStringAt(94, 55, "]");
-		}else if(currVar == &goAround){
-			nxtDisplayStringAt(94, 55, " ");
-			nxtDisplayStringAt(94, 47, "]");
-		}else if(currVar == &rampOtherSide){
-			nxtDisplayStringAt(94, 47, " ");
-			nxtDisplayStringAt(94, 39, "]");
-		}else if(currVar == &delay){
-			nxtDisplayStringAt(94, 39, " ");
-			nxtDisplayStringAt(94, 31, "]");
-		}else if(currVar == &forwardMotorRatio){
-			nxtDisplayStringAt(94, 31, " ");
-			nxtDisplayStringAt(94, 24, "]");
-		}else if(currVar == &backwardMotorRatio){
-			nxtDisplayStringAt(94, 24, " ");
-			nxtDisplayStringAt(94, 17, "]");
+		switch(currVar){
+			case &startNear:
+				nxtDisplayStringAt(94, 63, "]");
+				nxtDisplayStringAt(94, 17, " ");
+				break;
+			case &doIr:
+				nxtDisplayStringAt(94, 63, " ");
+				nxtDisplayStringAt(94, 55, "]");
+				break;
+			case &goAround:
+				nxtDisplayStringAt(94, 55, " ");
+				nxtDisplayStringAt(94, 47, "]");
+				break;
+			case &rampOtherSide:
+				nxtDisplayStringAt(94, 47, " ");
+				nxtDisplayStringAt(94, 39, "]");
+				break;
+			case &delay:
+				nxtDisplayStringAt(94, 39, " ");
+				nxtDisplayStringAt(94, 31, "]");
+				break;
+			case &forwardMotorRatio:
+				nxtDisplayStringAt(94, 31, " ");
+				nxtDisplayStringAt(94, 24, "]");
+				break;
+			case &backwardMotorRatio:
+				nxtDisplayStringAt(94, 24, " ");
+				nxtDisplayStringAt(94, 17, "]");
+				break;
+			default:
+				break;
 		}
 
-		// If the right or left arrow button is pressed on the NXT,
-		// Perform the appropriate action for the data type of the selected variable
-		if(nNxtButtonPressed == NEXT_BUTTON ||
-			nNxtButtonPressed == PREV_BUTTON){
-			if(currType == 'b')
-				switchBool(currVar, nNxtButtonPressed);
-			else if(currType == 'i')
-				switchInt(currVar, nNxtButtonPressed);
-			else if(currType == 'l')
-				switchIntByFive(currVar, nNxtButtonPressed);
+		// Shift value
+		if(nNxtButtonPressed == NEXT_BUTTON || nNxtButtonPressed == PREV_BUTTON){
+			switch(currType){
+				case 'b':
+					switchBool(currVar, nNxtButtonPressed);
+					break;
+				case 'i':
+					switchInt(currVar, nNxtButtonPressed);
+					break;
+				case 'l':
+					switchIntByFive(currVar, nNxtButtonPressed);
+					break;
+				default:
+					break;
+			}
 
-			// Play a short sound
 			PlaySound(soundBlip);
 
-			// Clear the timer. While the timer reads less than four seconds
-			// And any button is pressed, do nothing
+			// User must hold for 4 seconds to move another increment
 			ClearTimer(T1);
 			while(nNxtButtonPressed != kNoButton && time1[T1] <= 400){}
 		}
 
-		// If the orange button is pressed on the NXT,
-		// Switch the active variable to the next variable in the list
+		// Move down the list of options
 		if(nNxtButtonPressed == DOWN_BUTTON){
-			if(currVar == &startNear){
-				currVar = &doIr;
-				currType = 'b';
-			}else if(currVar == &doIr){
-				currVar = &goAround;
-				currType = 'b';
-			}else if(currVar == &goAround){
-				currVar = &rampOtherSide;
-				currType = 'b';
-			}else if(currVar == &rampOtherSide){
-				currVar = &delay;
-				currType = 'i';
-			}else if(currVar == &delay){
-				currVar = &forwardMotorRatio;
-				currType = 'l';
-			}else if(currVar == &forwardMotorRatio){
-				currVar = &backwardMotorRatio;
-				currType = 'l';
-			}else if(currVar == &backwardMotorRatio){
-				currVar = &startNear;
-				currType = 'b';
+			switch(currVar){
+				case &startNear:
+					currVar = &doIr;
+					currType = 'b';
+					break;
+				case &doIr:
+					currVar = &goAround;
+					currType = 'b';
+					break;
+				case &goAround:
+					currVar = &rampOtherSide;
+					currType = 'b';
+					break;
+				case &rampOtherSide:
+					currVar = &delay;
+					currType = 'i';
+					break;
+				case &delay:
+					currVar = &forwardMotorRatio;
+					currType = 'l';
+					break;
+				case &forwardMotorRatio:
+					currVar = &backwardMotorRatio;
+					currType = 'l';
+					break;
+				case &backwardMotorRatio:
+					currVar = &startNear;
+					currType = 'b';
+					break;
+				default:
+					break;
 			}
 
-			// Play a short sound
 			PlaySound(soundBlip);
 
-			// Clear the timer. While the timer reads less than four seconds
-			// And any button is pressed, do nothing
+			// User must hold for 4 seconds before moving down another row
 			ClearTimer(T1);
 			while(nNxtButtonPressed != kNoButton && time1[T1] <= 400){}
 		}
 	}
-
-
 }
 
 ///////////////////////////////////////////////////////////////////////
